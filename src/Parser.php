@@ -19,6 +19,13 @@ class Parser
     /**
      * The builder Instance.
      *
+     * @var array
+     */
+    public static $suffixes;
+
+    /**
+     * The builder Instance.
+     *
      * @var mixed
      */
     public $builder;
@@ -132,6 +139,8 @@ class Parser
 
         $this->prefix = Config::get('apihandler.prefix');
         $this->envelope = Config::get('apihandler.envelope');
+
+        $this::$suffixes = Config::get('apihandler.suffixes');
 
         $isEloquentModel = is_subclass_of($builder, '\Illuminate\Database\Eloquent\Model');
         $isEloquentRelation = is_subclass_of($builder, '\Illuminate\Database\Eloquent\Relations\Relation');
@@ -481,20 +490,8 @@ class Parser
      */
     protected function parseFilter($filterParams)
     {
-        $supportedPostfixes = [
-            'st' => '<',
-            'gt' => '>',
-            'min' => '>=',
-            'max' => '<=',
-            'lk' => 'LIKE',
-            'not-lk' => 'NOT LIKE',
-            'in' => 'IN',
-            'not-in' => 'NOT IN',
-            'not' => '!=',
-        ];
-
-        $supportedPrefixesStr = implode('|', $supportedPostfixes);
-        $supportedPostfixesStr = implode('|', array_keys($supportedPostfixes));
+        $supportedPrefixesStr = implode('|', $this::$suffixes);
+        $supportedPostfixesStr = implode('|', array_keys($this::$suffixes));
 
         foreach ($filterParams as $filterParamKey => $filterParamValue) {
             $keyMatches = [];
@@ -515,7 +512,7 @@ class Parser
                 if (strtolower(trim($filterParamValue)) == 'null') {
                     $comparator = 'NOT NULL';
                 } else {
-                    $comparator = $supportedPostfixes[$keyMatches[3]];
+                    $comparator = $this::$suffixes[$keyMatches[3]];
                 }
             }
 

@@ -14,6 +14,19 @@ class ApiHandlerTest extends PHPUnit_Framework_TestCase
     {
         parent::setUp();
 
+        //Test suffixes
+        $this->suffixes = [
+            'st' => '<',
+            'gt' => '>',
+            'min' => '>=',
+            'max' => '<=',
+            'lk' => 'LIKE',
+            'not-lk' => 'NOT LIKE',
+            'in' => 'IN',
+            'not-in' => 'NOT IN',
+            'not' => '!=',
+        ];
+
         //Test parameters
         $this->params = [
             //Fields
@@ -57,6 +70,8 @@ class ApiHandlerTest extends PHPUnit_Framework_TestCase
         $config = m::mock('ConfigMock');
         $config->shouldReceive('get')->once()
                ->with('apihandler.prefix')->andReturn('_');
+        $config->shouldReceive('get')->once()
+               ->with('apihandler.suffixes')->andReturn($this->suffixes);
         $config->shouldReceive('get')->once()
                ->with('apihandler.envelope')->andReturn(false);
         $config->shouldReceive('get')->once()
