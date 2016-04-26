@@ -498,7 +498,7 @@ class Parser
 
             //Matches every parameter with an optional prefix and/or postfix
             //e.g. not-title-lk, title-lk, not-title, title
-            $keyRegex = '/^(?:(' . $supportedPrefixesStr . ')-)?(.*?)(?:-(' . $supportedPostfixesStr . ')|$)/';
+            $keyRegex = '/^(?:(' . $supportedPrefixesStr . ')[-_])?(.*?)(?:[-_](' . $supportedPostfixesStr . ')|$)/';
 
             preg_match($keyRegex, $filterParamKey, $keyMatches);
 
