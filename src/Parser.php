@@ -11,6 +11,7 @@ use \Illuminate\Database\Eloquent\Relations\MorphMany;
 use \Illuminate\Database\Eloquent\Relations\MorphOne;
 use \Illuminate\Database\Query\Builder as QueryBuilder;
 use \Illuminate\Support\Facades\Config;
+use \Illuminate\Support\Facades\DB;
 use \InvalidArgumentException;
 use \ReflectionObject;
 
@@ -303,11 +304,18 @@ class Parser
     protected function parseFields($fieldsParam)
     {
         $fields = [];
+        $modelFieldNames = DB::getSchemaBuilder()->getColumnListing($this->builder->getModel()->getTable());
 
         foreach (explode(',', $fieldsParam) as $field) {
             //Only add the fields that are on the base resource
             if (strpos($field, '.') === false) {
-                $fields[] = trim($field);
+                $field = trim($field);
+                if ( ! in_array($field, $modelFieldNames)) {
+                    throw new ApiHandlerException('UnknownSelectField', [
+                            'field' => $field
+                        ]);
+                }
+                $fields[] = $field;
             } else {
                 $this->additionalFields[] = trim($field);
             }
@@ -463,18 +471,28 @@ class Parser
      */
     protected function parseSort($sortParam)
     {
-        foreach (explode(',', $sortParam) as $sortElem) {
-            //Check if ascending or derscenting(-) sort
-            if (preg_match('/^-.+/', $sortElem)) {
-                $direction = 'desc';
-            } else {
-                $direction = 'asc';
-            }
+        $modelFieldNames = DB::getSchemaBuilder()->getColumnListing($this->builder->getModel()->getTable());
 
-            $pair = [preg_replace('/^-/', '', $sortElem), $direction];
+        foreach (explode(',', $sortParam) as $sortElem) {
+            //Parse sort elements
+            if ( ! preg_match('/^(-?)(.+)$/', $sortElem, $matches))
+                throw new ApiHandlerException('UnknownSortField', [
+                        'field' => $sortElem
+                    ]);
+
+            //Check if ascending or derscenting(-) sort
+            $direction = $matches[1] ? 'desc' : 'asc';
+
+            $pair = [$matches[2], $direction];
 
             //Only add the sorts that are on the base resource
             if (strpos($sortElem, '.') === false) {
+                if ( ! in_array($matches[2], $modelFieldNames)) {
+                    throw new ApiHandlerException('UnknownSortField', [
+                            'field' => $matches[2]
+                        ]);
+                }
+
                 call_user_func_array([$this->query, 'orderBy'], $pair);
             } else {
                 $this->additionalSorts[] = $pair;
@@ -490,6 +508,8 @@ class Parser
      */
     protected function parseFilter($filterParams)
     {
+        $modelFieldNames = DB::getSchemaBuilder()->getColumnListing($this->builder->getModel()->getTable());
+
         $supportedPrefixesStr = implode('|', $this::$suffixes);
         $supportedPostfixesStr = implode('|', array_keys($this::$suffixes));
 
@@ -517,6 +537,11 @@ class Parser
             }
 
             $column = $keyMatches[2];
+            if ( ! in_array($column, $modelFieldNames)) {
+                throw new ApiHandlerException('UnknownFilterField', [
+                        'field' => $column
+                    ]);
+            }
 
             if ($comparator == 'IN') {
                 $values = explode(',', $filterParamValue);

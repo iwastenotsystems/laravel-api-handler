@@ -4,6 +4,7 @@ use \Illuminate\Database\Eloquent\Collection;
 use \Illuminate\Database\Query\Expression;
 use \Illuminate\Http\JsonResponse;
 use \Illuminate\Support\Facades\Config;
+use \Illuminate\Support\Facades\DB;
 use \Illuminate\Support\Facades\Input;
 use \Illuminate\Support\Facades\Response;
 use \Marcelgwerder\ApiHandler\ApiHandler;
@@ -114,6 +115,13 @@ class ApiHandlerTest extends PHPUnit_Framework_TestCase
         $resolver = m::mock('Illuminate\Database\ConnectionResolverInterface', ['connection' => $connection]);
 
         Post::setConnectionResolver($resolver);
+
+        $schemaBuilder = m::mock('SchemaBuilderMock');
+        $schemaBuilder->shouldReceive('getColumnListing')->once()->with('posts')->andReturn(['id', 'title', 'description', 'first_name']);
+
+        $db = m::mock('DBMock');
+        $db->shouldReceive('getSchemaBuilder')->once()->andReturn($schemaBuilder);
+        DB::swap($db);
 
         $this->apiHandler = new ApiHandler();
     }
