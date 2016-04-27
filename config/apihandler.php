@@ -91,6 +91,7 @@ return [
         'InvalidQueryParameter' => ['http_code' => 400, 'message' => 'Invalid parameter'],
         'UnknownResourceField' => ['http_code' => 400, 'message' => 'Unknown field ":field"'],
         'UnknownResourceRelation' => ['http_code' => 400, 'message' => 'Unknown relation ":relation"'],
+        'UnknownSortField' => ['http_code' => 400, 'message' => 'Unknown field ":field"'],
     ],
 
     /*
