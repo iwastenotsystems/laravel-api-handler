@@ -296,6 +296,27 @@ class Parser
     }
 
     /**
+     * Return an array of field names.
+     *
+     * @return array
+     */
+    public function getFieldNames()
+    {
+        $modelFieldNames = DB::getSchemaBuilder()->getColumnListing($this->builder->getModel()->getTable());
+
+        if ( ! is_array($this->query->columns))
+            return $modelFieldNames;
+
+        return array_flatten(array_map(function ($column) use ($modelFieldNames) {
+            if ($column === '*')
+                $column = $modelFieldNames;
+            else if (preg_match_all('/\bAS\s+(.*?)$/i', $column, $matches))
+                $column = $matches[1];
+            return  $column;
+        }, $this->query->columns));
+    }
+
+    /**
      * Parse the fields parameter and return an array of fields
      *
      * @param  string     $fieldsParam
@@ -304,7 +325,7 @@ class Parser
     protected function parseFields($fieldsParam)
     {
         $fields = [];
-        $modelFieldNames = DB::getSchemaBuilder()->getColumnListing($this->builder->getModel()->getTable());
+        $modelFieldNames = $this->getFieldNames();
 
         foreach (explode(',', $fieldsParam) as $field) {
             //Only add the fields that are on the base resource
@@ -471,7 +492,7 @@ class Parser
      */
     protected function parseSort($sortParam)
     {
-        $modelFieldNames = DB::getSchemaBuilder()->getColumnListing($this->builder->getModel()->getTable());
+        $modelFieldNames = $this->getFieldNames();
 
         foreach (explode(',', $sortParam) as $sortElem) {
             //Parse sort elements
@@ -508,7 +529,7 @@ class Parser
      */
     protected function parseFilter($filterParams)
     {
-        $modelFieldNames = DB::getSchemaBuilder()->getColumnListing($this->builder->getModel()->getTable());
+        $modelFieldNames = $this->getFieldNames();
 
         $supportedPrefixesStr = implode('|', $this::$suffixes);
         $supportedPostfixesStr = implode('|', array_keys($this::$suffixes));

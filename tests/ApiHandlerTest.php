@@ -49,7 +49,7 @@ class ApiHandlerTest extends PHPUnit_Framework_TestCase
             //With
             '_with' => 'comments.user',
             //Sort
-            '_sort' => '-title,first_name,comments.created_at',
+            '_sort' => '-title,description,comments.created_at',
             //Config
             '_config' => 'mode-default,meta-filter-count,meta-total-count',
         ];
@@ -227,7 +227,7 @@ class ApiHandlerTest extends PHPUnit_Framework_TestCase
 
         $orders = $queryBuilder->orders;
         $this->assertContains(['column' => 'title', 'direction' => 'desc'], $orders);
-        $this->assertContains(['column' => 'first_name', 'direction' => 'asc'], $orders);
+        $this->assertContains(['column' => 'description', 'direction' => 'asc'], $orders);
 
         //
         //With
