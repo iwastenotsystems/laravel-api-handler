@@ -479,7 +479,7 @@ class Parser
                 $this->query->columns = [];
             }
 
-            $this->query->columns = array_merge($this->query->columns, $fields);
+            $this->query->columns = array_unique(array_merge($this->query->columns, $fields));
         }
     }
 
