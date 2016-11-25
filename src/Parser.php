@@ -310,7 +310,7 @@ class Parser
         return array_flatten(array_map(function ($column) use ($modelFieldNames) {
             if ($column === '*')
                 $column = $modelFieldNames;
-            else if (preg_match_all('/\bAS\s+(.*?)$/i', $column, $matches))
+            else if (preg_match('/^(?:\w+\.)*(.*?)$/i', $column, $matches))
                 $column = $matches[1];
             return  $column;
         }, $this->query->columns));
@@ -492,7 +492,7 @@ class Parser
      */
     protected function parseSort($sortParam)
     {
-        $modelFieldNames = $this->getFieldNames();
+        $modelFieldNames = preg_replace('/^.+?\s+AS\s+(\w+)$/i', '$1', $this->getFieldNames());
 
         foreach (explode(',', $sortParam) as $sortElem) {
             //Parse sort elements
@@ -530,6 +530,12 @@ class Parser
     protected function parseFilter($filterParams)
     {
         $modelFieldNames = $this->getFieldNames();
+        $modelFieldAliases = array_reduce($modelFieldNames,
+                function ($array, $item) {
+                    if (preg_match('/^(.+?)\s+AS\s+(\w+)$/i', $item, $matches))
+                        $array[$matches[2]] = $matches[1];
+                    return $array;
+                }, []);
 
         $supportedPrefixesStr = implode('|', $this::$suffixes);
         $supportedPostfixesStr = implode('|', array_keys($this::$suffixes));
@@ -558,6 +564,10 @@ class Parser
             }
 
             $column = $keyMatches[2];
+
+            if (in_array($column, array_keys($modelFieldAliases)))
+                $column = $modelFieldAliases[$column];
+
             if ( ! in_array($column, $modelFieldNames)) {
                 throw new ApiHandlerException('UnknownFilterField', [
                         'field' => $column
